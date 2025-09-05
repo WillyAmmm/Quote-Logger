@@ -1,29 +1,39 @@
-Quote Logger Browser Extension
+# Quote Logger Browser Extension
 
-Overview
-- Captures accepted loads from Boeing's Blue Yonder portal and syncs to your QuoteLog Google Sheet via the existing Apps Script web app (same URL used by Outlook tooling).
-- Adds new loads not yet in the sheet and updates status and rate for existing Load IDs.
-- Shows a summary of added, status updates, and rate changes.
+## Overview
 
-Files
-- manifest.json: MV3 manifest
-- content.js: Scrapes Accepted Loads table in Blue Yonder
-- popup.html/css/js: UI to trigger capture and show results
-- options.html: Configure Apps Script URL, Team, and Submitted By
+Quote Logger is a Chromium extension that records spot quotes from customer portals and posts them to your Quote Log Google Sheet through a pre‑built Google Apps Script.  
+Currently the extension supports Boeing’s Blue Yonder portal but the codebase is designed to support additional customers in the future.
 
-Setup
-1) In Chrome/Edge, open extensions and enable Developer mode.
-2) Load unpacked: select `extensions/quote-logger`.
-3) Optional: Open Options to set your default Team. The Apps Script URL is already built-in.
+## Features
 
-Usage
-1) Open Blue Yonder: https://tbc-aztms-pr2.jdadelivers.com/tm/framework/Frame.jsp
-2) Navigate to the Accepted Loads table view (acceptedLoadsTable).
-3) Click the extension icon and press “Capture Blue Yonder Quotes”.
-4) A notification and in-popup status will summarize: Added, Status updates, Rate changes.
+- Scrapes the **Accepted Loads** table in Blue Yonder and extracts load ID, rate, equipment, origin/destination, miles, and more.
+- Sends new loads to the Google Apps Script web app and updates status and rates for existing Load IDs.
+- Displays a summary of how many loads were added, updated, or had rate changes.
+- Stores a default team selection and offers a light/dark theme toggle.
+- "Recent Quotes" view shows the latest entries and lets you edit their status, rate, or notes.
+- Normalizes equipment descriptions and maps Blue Yonder statuses to Quote Log values.
 
-Notes
-- Equipment types are normalized (e.g., "Curtainside - 53 FT" → "Conestoga", "Dry Van - 53 FT" → "Dry Van").
-- Status mapping from Blue Yonder: Bid Pending → Pending; Bid Rejected → Lost; Load Awarded → Won; Load Removed from Auction → Ended.
-- If your Apps Script (`Code.gs`) is enhanced to return `statusChanged` and `rateChanged`, the extension will report these precisely. Otherwise, it reports attempted updates.
-- Submitted By is no longer collected; the column is left blank on append.
+## Installation
+
+1. On GitHub, click the green **Code** button and choose **Download ZIP**. Extract the archive on your computer.
+2. In Chrome or Edge open the extensions page (`chrome://extensions` or `edge://extensions`).
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the extracted repository's `extension` folder.
+
+## Usage
+
+1. Log in to Boeing's Blue Yonder portal and open the **Accepted Loads** table.
+2. Click the Quote Logger icon and press **Capture Quotes**.
+3. A notification and in‑popup status display the number of loads added, status changes, and rate updates.
+4. Use **View Recent Quotes** to open a window showing your last 10 submissions where you can adjust status, rate, or notes and save the changes.
+
+## Notes
+
+- Status mapping: "Bid Pending/Submited" → Pending, "Bid Rejected" → Lost, "Load Awarded" → Won, "Load Removed from Auction" → Ended.
+- Equipment names are normalized (e.g., "Curtainside - 53 FT" becomes "Conestoga").
+- The extension communicates with the existing QuoteLog Apps Script used by other tooling. No additional setup is required.
+
+## Future Plans
+
+Future updates will add support for more customer portals beyond Boeing.
