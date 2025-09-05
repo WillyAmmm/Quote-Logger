@@ -24,10 +24,7 @@ function doPost(e) {
       if (match) { return { city: match[1].trim(), state: match[2].trim().toUpperCase() }; }
       return { city: raw.replace(/,\s*$/, ''), state: '' };
     }
-    function cleanInt(val) {
-      if (val !== undefined && val !== '') { var num = parseInt(val, 10); return isNaN(num) ? null : num; }
-      return null;
-    }
+    function cleanInt(val) { if (val !== undefined && val !== '') { var num = parseInt(val, 10); return isNaN(num) ? null : num; } return null; }
     function toDate(value) {
       if (!value) return null;
       if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -57,19 +54,33 @@ function doPost(e) {
 
     // Column indices (1-based)
     var COL_LOAD_ID = 4, COL_STATUS = 18, COL_RATE = 15, COL_TIMESTAMP = 19;
+    var COL_EQUIPMENT = 9, COL_NOTES = 16;
 
     // Build index of existing LoadIDs
     var lastRow = sheet.getLastRow();
     var idMap = {};
-    if (lastRow > 1) {
-      var ids = sheet.getRange(2, COL_LOAD_ID, lastRow - 1, 1).getValues();
+    var rowCount = Math.max(0, lastRow - 1);
+    var current = [];
+    if (rowCount > 0) {
+      // Read entire table once to avoid per-cell calls
+      current = sheet.getRange(2, 1, rowCount, 19).getValues();
+      var ids = current.map(function(r){ return r[COL_LOAD_ID - 1]; });
       for (var i = 0; i < ids.length; i++) {
-        var id = String(ids[i][0] || '');
-        if (id) idMap[id] = i + 2; // row number
+        var id = String(ids[i] || '');
+        if (id) idMap[id] = i + 2; // sheet row number (2-based)
       }
     }
 
+    // Column snapshots we can mutate, then write back in one call per column
+    var statusCol = rowCount > 0 ? current.map(function(r){ return r[COL_STATUS - 1]; }) : [];
+    var rateCol   = rowCount > 0 ? current.map(function(r){ return r[COL_RATE - 1]; })   : [];
+    var notesCol  = rowCount > 0 ? current.map(function(r){ return r[COL_NOTES - 1]; })  : [];
+    var equipCol  = rowCount > 0 ? current.map(function(r){ return r[COL_EQUIPMENT - 1]; }): [];
+    var tsCol     = rowCount > 0 ? current.map(function(r){ return r[COL_TIMESTAMP - 1]; }): [];
+
     var added = 0, statusUpdates = 0, rateChanges = 0;
+    var toAppend = [];
+    var touchedStatus = false, touchedRate = false, touchedNotes = false, touchedEquip = false, touchedTs = false;
 
     for (var r = 0; r < rows.length; r++) {
       var rec = rows[r] || {};
@@ -91,36 +102,51 @@ function doPost(e) {
 
       var rowNum = idMap[String(rec.LoadID)];
       if (rowNum) {
-        // Update existing row
+        // Update existing row (mutate column arrays only when field provided and changed)
+        var idx0 = rowNum - 2; // zero-based index into arrays
         if (rec.Status !== undefined) {
-          var prevStatus = sheet.getRange(rowNum, COL_STATUS).getValue();
-          if (String(prevStatus) !== String(rec.Status)) {
-            sheet.getRange(rowNum, COL_STATUS).setValue(rec.Status);
+          if (String(statusCol[idx0]) !== String(rec.Status)) {
+            statusCol[idx0] = rec.Status;
             statusUpdates++;
+            touchedStatus = true;
           }
         }
         if (rec.Rate !== undefined && rec.Rate !== '') {
           var cleanedRate = cleanCurrency(rec.Rate);
           if (cleanedRate !== null) {
-            var prevRate = sheet.getRange(rowNum, COL_RATE).getValue();
-            if (cleanedRate !== cleanCurrency(prevRate)) {
-              sheet.getRange(rowNum, COL_RATE).setValue(cleanedRate);
+            var prevRate = cleanCurrency(rateCol[idx0]);
+            if (cleanedRate !== prevRate) {
+              rateCol[idx0] = cleanedRate;
               rateChanges++;
+              touchedRate = true;
             }
           }
         }
         if (rec.Notes !== undefined) {
-          sheet.getRange(rowNum, 16).setValue(rec.Notes); // Notes col
+          if (String(notesCol[idx0] || '') !== String(rec.Notes || '')) {
+            notesCol[idx0] = rec.Notes;
+            touchedNotes = true;
+          }
         }
         if (rec["Equipment Type"] !== undefined) {
-          sheet.getRange(rowNum, 9).setValue(rec["Equipment Type"]); // Equipment Type col
+          if (String(equipCol[idx0] || '') !== String(rec["Equipment Type"] || '')) {
+            equipCol[idx0] = rec["Equipment Type"];
+            touchedEquip = true;
+          }
         }
         if (rec.Timestamp) {
           var ts = toDateTime(rec.Timestamp);
-          if (ts) sheet.getRange(rowNum, COL_TIMESTAMP).setValue(ts);
+          if (ts) {
+            var prevTs = tsCol[idx0];
+            var prevMs = (prevTs instanceof Date) ? prevTs.getTime() : null;
+            if (prevMs !== ts.getTime()) {
+              tsCol[idx0] = ts;
+              touchedTs = true;
+            }
+          }
         }
       } else {
-        // Append new row
+        // Prepare new row for batch append
         var milesValue = cleanInt(rec.Miles);
         var rateValue = cleanCurrency(rec.Rate);
         var stopsValue = cleanInt(rec.Stops);
@@ -130,7 +156,7 @@ function doPost(e) {
         var deliveryDateValue = toDate(rec["Delivery Date"]);
         var timestampValue = toDateTime(rec.Timestamp || rec.BidActionDateTime || rec.ActionTimestamp);
 
-        sheet.appendRow([
+        toAppend.push([
           dateValue,
           rec.Team,
           rec.Customer,
@@ -153,6 +179,20 @@ function doPost(e) {
         ]);
         added++;
       }
+    }
+
+    // Persist column updates in bulk to avoid per-cell calls
+    if (rowCount > 0) {
+      if (touchedStatus) sheet.getRange(2, COL_STATUS, rowCount, 1).setValues(statusCol.map(function(v){ return [v]; }));
+      if (touchedRate)   sheet.getRange(2, COL_RATE,   rowCount, 1).setValues(rateCol.map(function(v){ return [v]; }));
+      if (touchedNotes)  sheet.getRange(2, COL_NOTES,  rowCount, 1).setValues(notesCol.map(function(v){ return [v]; }));
+      if (touchedEquip)  sheet.getRange(2, COL_EQUIPMENT, rowCount, 1).setValues(equipCol.map(function(v){ return [v]; }));
+      if (touchedTs)     sheet.getRange(2, COL_TIMESTAMP, rowCount, 1).setValues(tsCol.map(function(v){ return [v]; }));
+    }
+
+    // Batch append new rows
+    if (toAppend.length > 0) {
+      sheet.getRange(lastRow + 1, 1, toAppend.length, 19).setValues(toAppend);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
