@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Recent Quotes</title>
+    <link rel="stylesheet" href="recent.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Recent Quotes</h1>
+        <div class="controls">
+          <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+          <div class="segmented" role="radiogroup" aria-label="Team">
+            <label class="seg"><input type="radio" name="team" value="UNO" /><span>UNO</span></label>
+            <label class="seg"><input type="radio" name="team" value="WARP" /><span>WARP</span></label>
+          </div>
+        </div>
+      </header>
+      <main id="recentList" class="recent" aria-live="polite"></main>
+      <footer>
+        <div id="status" class="status"></div>
+        <button id="btnSave" class="primary">Save Changes</button>
+      </footer>
+    </div>
+    <script src="recent.js"></script>
+  </body>
+  </html>

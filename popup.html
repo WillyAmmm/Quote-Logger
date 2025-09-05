@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Quote Logger</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <h1>Quote Logger</h1>
+      </header>
+
+      <section class="team">
+        <div class="segmented" role="radiogroup" aria-label="Team">
+          <label class="seg">
+            <input type="radio" name="team" value="UNO" />
+            <span>UNO</span>
+          </label>
+          <label class="seg">
+            <input type="radio" name="team" value="WARP" />
+            <span>WARP</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="btnCapture" class="primary">Capture Quotes</button>
+        <button id="btnOpenRecent" class="primary subtle" style="margin-top:8px">View Recent Quotes</button>
+      </section>
+
+      <section id="status" class="status" aria-live="polite"></section>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+  </html>

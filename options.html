@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Quote Logger Settings</title>
+    <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;}
+      h1{font-size:18px;margin:0 0 16px;}
+      label{display:block;margin:12px 0 6px;}
+      input{width:100%;padding:8px;font-size:14px;}
+      .hint{color:#444;font-size:12px;margin-top:4px}
+      .row{display:grid;grid-template-columns: 1fr;gap:12px;max-width:720px}
+      .ok{color:#065f46}.err{color:#991b1b}
+    </style>
+  </head>
+  <body>
+    <h1>Quote Logger Settings</h1>
+    <div class="row">
+      <div>
+        <label>Default Team</label>
+        <select id="team">
+          <option>UNO</option>
+          <option>WARP</option>
+        </select>
+      </div>
+      <div class="hint">The Apps Script URL is built-in; no configuration needed.</div>
+      <div id="status" class="hint"></div>
+    </div>
+    <script>
+      const DEFAULTS = { team: 'UNO', customer: 'Boeing' };
+      function el(id){return document.getElementById(id)}
+      async function load(){
+        const cfg = await chrome.storage.sync.get(DEFAULTS);
+        el('team').value = cfg.team || 'UNO';
+      }
+      async function save(){
+        await chrome.storage.sync.set({ team: el('team').value });
+        const s = el('status'); s.textContent = 'Saved'; s.className='hint ok';
+        setTimeout(()=>{s.textContent=''; s.className='hint';}, 1500);
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        load();
+        el('team').addEventListener('change', save);
+      });
+    </script>
+  </body>
+  </html>
