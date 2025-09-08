@@ -8,18 +8,47 @@
   <body>
     <div class="wrap">
       <header>
-        <h1>Recent Quotes</h1>
-        <div class="controls">
-          <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <div class="hdr-left">
           <div class="segmented" role="radiogroup" aria-label="Team">
             <label class="seg"><input type="radio" name="team" value="UNO" /><span>UNO</span></label>
             <label class="seg"><input type="radio" name="team" value="WARP" /><span>WARP</span></label>
           </div>
+          <div class="search" id="search">
+            <button id="btnSearch" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-controls="searchPanel" title="Search">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+            </button>
+            <div id="searchPanel" class="search-panel" aria-hidden="true">
+              <select id="fltCustomer" title="Customer">
+                <option value="">Customer</option>
+              </select>
+              <select id="fltOrigin" title="Origin State">
+                <option value="">Origin State</option>
+              </select>
+              <select id="fltDest" title="Destination State">
+                <option value="">Destination State</option>
+              </select>
+              <select id="fltEquip" title="Equipment Type">
+                <option value="">Equipment</option>
+              </select>
+              <button id="btnClearFilters" class="ghost" title="Clear Filters">Clear</button>
+              <button id="btnCloseSearch" class="icon-btn close-btn" aria-label="Close search" title="Close">
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="hdr-right">
+          <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
         </div>
       </header>
       <main id="recentList" class="recent" aria-live="polite"></main>
       <footer>
-        <div id="status" class="status"></div>
+        <div class="foot-left">
+          <div id="winrate" class="winrate" aria-live="polite"></div>
+          <div id="status" class="status"></div>
+        </div>
         <button id="btnSave" class="primary">Save Changes</button>
       </footer>
     </div>

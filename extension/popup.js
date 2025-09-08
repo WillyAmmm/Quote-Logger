@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   el('btnOpenRecent').addEventListener('click', async () => {
     const url = chrome.runtime.getURL('recent.html');
     try {
-      await chrome.windows.create({ url, type: 'popup', width: 900, height: 780 });
+      await chrome.windows.create({ url, type: 'popup', width: 900, height: 760 });
     } catch (e) {
       // Fallback: open in new tab
       chrome.tabs.create({ url });
