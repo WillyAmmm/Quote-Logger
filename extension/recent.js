@@ -5,7 +5,23 @@ const SEARCH_INDEX = {};   // team -> { origins:[], dests:[], originToDest: Map 
 
 function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
 function el(id){ return document.getElementById(id); }
-function setStatus(msg, cls=''){ const s=el('status'); s.textContent = msg; s.className = `status ${cls}`.trim(); }
+function setStatus(msg, cls=''){ const s=el('status'); if (!s) return; s.textContent = msg; s.className = `status ${cls}`.trim(); }
+
+function showLoading(on, { wipe=false } = {}){
+  const o = el('loading');
+  if (o) o.hidden = !on;
+  if (on && wipe){ const host = el('recentList'); if (host) host.innerHTML=''; }
+}
+
+function setButtonLoading(on){
+  const b = el('btnSave');
+  if (!b) return;
+  b.disabled = !!on;
+  b.classList.toggle('loading', !!on);
+  b.setAttribute('aria-busy', on ? 'true' : 'false');
+}
+
+function setSaveMsg(msg, cls=''){ const s=el('saveMsg'); if (!s) return; s.textContent = msg; s.className = `status ${cls}`.trim(); }
 
 async function getConfig(){ const res = await chrome.storage.sync.get(DEFAULTS); return { ...DEFAULTS, ...res }; }
 async function setConfig(partial){ await chrome.storage.sync.set(partial); }
@@ -68,7 +84,8 @@ function renderRecent(rows, opts={}){
 }
 
 async function loadRecent(team){
-  setStatus('Loading…');
+  setStatus('');
+  showLoading(true, { wipe: true });
   const url = `${APPS_SCRIPT_URL}?team=${encodeURIComponent(team)}&limit=10`;
   const res = await getJson(url);
   if (res.ok && res.data && Array.isArray(res.data.rows)){
@@ -78,6 +95,7 @@ async function loadRecent(team){
   } else {
     setStatus('Failed to load recent', 'err');
   }
+  showLoading(false);
 }
 
 async function loadAll(team){
@@ -192,6 +210,7 @@ function updateWinrateDisplay(rows){
 }
 
 async function applySearch(team){
+  showLoading(true, { wipe: true });
   const all = await loadAll(team);
   populateFilters(team, all);
   const filters = {
@@ -207,6 +226,7 @@ async function applySearch(team){
   // Map displayed rows back to their indices in the full array, so edits map correctly
   const idxMap = top10.map(row => all.indexOf(row));
   renderRecent(top10, { baseRows: all, idxMap });
+  showLoading(false);
 }
 
 function openSearchPanel(open){
@@ -256,13 +276,17 @@ function collectChanges(){
 async function saveChanges(team){
   const changes = collectChanges();
   if (!changes.length){ setStatus('No changes to save'); return; }
-  setStatus('Saving…');
+  setStatus('');
+  setButtonLoading(true);
+  setSaveMsg('');
   const res = await postJson(APPS_SCRIPT_URL, { rows: changes });
   if (res.ok && res.data && res.data.result==='success'){
-    setStatus('Saved', 'ok');
     await loadRecent(team);
+    setSaveMsg('Saved!', 'ok');
+    setButtonLoading(false);
   } else {
-    setStatus('Save failed', 'err');
+    setSaveMsg('Save failed', 'err');
+    setButtonLoading(false);
   }
 }
 
@@ -291,8 +315,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await setConfig({team:r.value});
     // If search panel is open, refresh all + filters + results; else load recent 10
     const isSearchOpen = document.getElementById('search')?.getAttribute('data-open')==='1';
+    // Show loading immediately and clear existing rows so the message is readable
+    showLoading(true, { wipe: true });
     if (isSearchOpen){ await applySearch(r.value); }
-    else { loadRecent(r.value); }
+    else { await loadRecent(r.value); }
     // Background warm the full dataset for this team to avoid later lag
     loadAll(r.value).then(rows=>{ updateWinrateDisplay(rows||[]); }).catch(()=>{});
   }));

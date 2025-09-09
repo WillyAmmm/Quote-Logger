@@ -43,13 +43,24 @@
           <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
         </div>
       </header>
-      <main id="recentList" class="recent" aria-live="polite"></main>
+      <main class="recent-wrap">
+        <div id="recentList" class="recent" aria-live="polite"></div>
+        <div id="loading" class="loading-overlay" hidden>
+          <div class="loading-box" role="status" aria-live="assertive">
+            <div class="spinner" aria-hidden="true"></div>
+            <div class="loading-text">Please Wait - Loading Data</div>
+          </div>
+        </div>
+      </main>
       <footer>
         <div class="foot-left">
           <div id="winrate" class="winrate" aria-live="polite"></div>
           <div id="status" class="status"></div>
         </div>
-        <button id="btnSave" class="primary">Save Changes</button>
+        <div class="foot-right">
+          <div id="saveMsg" class="status" aria-live="polite"></div>
+          <button id="btnSave" class="primary">Save Changes</button>
+        </div>
       </footer>
     </div>
     <script src="recent.js"></script>
